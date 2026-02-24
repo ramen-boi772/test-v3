@@ -4,46 +4,124 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Privacy-Friendly Search</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+    h1 {
+      text-align: center;
+    }
+    #search-container {
+      max-width: 600px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    input[type="text"] {
+      padding: 10px;
+      width: 100%;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      background-color: #4CAF50;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    #results {
+      margin-top: 20px;
+    }
+    .result-item {
+      margin-bottom: 15px;
+      padding: 15px;
+      background-color: white;
+      border-radius: 5px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    .result-item h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+    .result-item p {
+      font-size: 14px;
+      color: #555;
+    }
+    .result-item a {
+      text-decoration: none;
+      color: #1E90FF;
+    }
+    .result-item a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
-  <h1>Privacy-Friendly Search</h1>
-  <input type="text" id="query" placeholder="Search DuckDuckGo..." />
-  <button onclick="search()">Search</button>
 
-  <div id="results"></div>
+  <div id="search-container">
+    <h1>Privacy-Friendly Search</h1>
+    <input type="text" id="query" placeholder="Search DuckDuckGo..." />
+    <button onclick="search()">Search</button>
+
+    <div id="results"></div>
+  </div>
 
   <script>
     async function search() {
       const query = document.getElementById('query').value;
       if (!query) return;
 
-      const res = await fetch(`https://your-server-url.com/search?q=${encodeURIComponent(query)}`);
-      const data = await res.json();
+      try {
+        const res = await fetch(`https://test-v3-production.up.railway.app/search?q=${encodeURIComponent(query)}`);
+        const data = await res.json();
 
-      const resultsDiv = document.getElementById('results');
-      resultsDiv.innerHTML = '';
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = '';
 
-      if (data.AbstractText) {
-        resultsDiv.innerHTML += `<h3>Answer: ${data.AbstractText}</h3>`;
-      }
+        // If DuckDuckGo returns an abstract (short answer)
+        if (data.AbstractText) {
+          resultsDiv.innerHTML += `<div class="result-item"><h3>Answer:</h3><p>${data.AbstractText}</p></div>`;
+        }
 
-      if (data.RelatedTopics && data.RelatedTopics.length > 0) {
-        data.RelatedTopics.forEach(item => {
-          if (item.Result && item.FirstURL) {
-            resultsDiv.innerHTML += `
-              <div>
-                <a href="${item.FirstURL}" target="_blank">
-                  <h3>${item.Text}</h3>
-                </a>
-                <p>${item.Result}</p>
-              </div>
-            `;
-          }
-        });
-      } else {
-        resultsDiv.innerHTML += `<p>No results found.</p>`;
+        // If there are related topics (search results)
+        if (data.RelatedTopics && data.RelatedTopics.length > 0) {
+          data.RelatedTopics.forEach(item => {
+            if (item.Result && item.FirstURL) {
+              resultsDiv.innerHTML += `
+                <div class="result-item">
+                  <a href="${item.FirstURL}" target="_blank">
+                    <h3>${item.Text}</h3>
+                  </a>
+                  <p>${item.Result}</p>
+                </div>
+              `;
+            }
+          });
+        } else {
+          resultsDiv.innerHTML += `<div class="result-item"><p>No results found.</p></div>`;
+        }
+
+      } catch (error) {
+        console.error("Error fetching results: ", error);
+        document.getElementById('results').innerHTML = `<div class="result-item"><p>Sorry, something went wrong. Please try again later.</p></div>`;
       }
     }
   </script>
+
 </body>
 </html>
